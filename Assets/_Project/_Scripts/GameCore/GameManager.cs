@@ -19,6 +19,7 @@ namespace GameCore
         [SerializeField] private View.UIScreen _gameScreen;
         [SerializeField] private View.UIScreen _winScreen;
         [SerializeField] private View.UIScreen _loseScreen;
+        [SerializeField] private View.UI.Game.StoryScreen _storyScreen;
         [SerializeField] private Misc.SceneManagment.SceneLoader _sceneLoader;
         [SerializeField] private TMP_Text _scoreText;
         [SerializeField] private TMP_Text _timerText;
@@ -156,7 +157,10 @@ namespace GameCore
 
                 UnlockNextLevel(CurrentLevelIndex);
 
-                _winScreen.StartScreen();
+                _storyScreen.ShowStory(() =>
+                {
+                    _winScreen.StartScreen();
+                });
             }
             else
             {
