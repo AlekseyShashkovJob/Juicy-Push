@@ -1230,7 +1230,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _gameMenu: {fileID: 434809754}
-  _internet: {fileID: 0}
+  _internet: {fileID: 541752492}
   _loading: {fileID: 2046108140}
 --- !u!114 &1113477831
 MonoBehaviour:
