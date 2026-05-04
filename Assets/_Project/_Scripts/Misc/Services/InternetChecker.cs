@@ -1,7 +1,7 @@
 using System;
+using System.Collections;
 using UnityEngine;
-using Cysharp.Threading.Tasks;
-using System.Net.Http;
+using UnityEngine.Networking;
 
 namespace Misc.Services
 {
@@ -14,32 +14,30 @@ namespace Misc.Services
             "https://www.apple.com/library/test/success.html"
         };
 
-        public async UniTask<bool> IsAvailableAsync()
+        public IEnumerator CheckAvailability(Action<bool> callback)
         {
             if (Application.internetReachability == NetworkReachability.NotReachable)
                 Debug.LogWarning("Unity сообщает: нет соединения, выполняем HTTP проверку.");
 
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-
             foreach (var url in TestUrls)
             {
-                try
+                using var request = UnityWebRequest.Head(url);
+                request.timeout = 8;
+
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
                 {
-                    var response = await client.GetAsync(url).AsUniTask();
-                    if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                    {
-                        Debug.Log($"Интернет подтверждён через: {url}");
-                        return true;
-                    }
+                    Debug.Log($"Интернет подтверждён через: {url}");
+                    callback?.Invoke(true);
+                    yield break;
                 }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"Ошибка проверки {url}: {ex.Message}");
-                }
+
+                Debug.LogWarning($"Ошибка проверки {url}: {request.error}");
             }
 
             Debug.LogError("Интернет не доступен после проверки всех URL.");
-            return false;
+            callback?.Invoke(false);
         }
     }
 }

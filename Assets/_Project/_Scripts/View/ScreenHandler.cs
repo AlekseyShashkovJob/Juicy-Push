@@ -1,5 +1,5 @@
+using System.Collections;
 using UnityEngine;
-using Cysharp.Threading.Tasks;
 
 namespace View.UI
 {
@@ -16,12 +16,13 @@ namespace View.UI
 
         private void Awake()
         {
-            _mode = (AppMode)PlayerPrefs.GetInt(Misc.Data.ServicesConstants.WEB_VIEW_MODE_KEY, (int)AppMode.None);
+            _mode = (AppMode)PlayerPrefs.GetInt(
+                Misc.Data.ServicesConstants.WEB_VIEW_MODE_KEY, (int)AppMode.None);
         }
 
         private void Start()
         {
-            ProceedAppFlow().Forget();
+            StartCoroutine(ProceedAppFlow());
         }
 
         private void Update()
@@ -32,13 +33,13 @@ namespace View.UI
             }
         }
 
-        public async UniTask ProceedAppFlow()
+        private IEnumerator ProceedAppFlow()
         {
             _loading.SetActive(true);
 
             if (_mode == AppMode.None)
             {
-                await FirstLaunch();
+                yield return StartCoroutine(FirstLaunch());
             }
             else
             {
@@ -48,13 +49,19 @@ namespace View.UI
             }
         }
 
-        private async UniTask FirstLaunch()
+        private IEnumerator FirstLaunch()
         {
-            if (!await IsInternetAvailable())
+            bool isAvailable = false;
+
+            yield return StartCoroutine(
+                new Misc.Services.InternetChecker()
+                    .CheckAvailability(result => isAvailable = result));
+
+            if (!isAvailable)
             {
                 _loading.SetActive(false);
                 _internet.StartScreen();
-                return;
+                yield break;
             }
 
             _loading.SetActive(false);
@@ -66,13 +73,17 @@ namespace View.UI
         {
             var currentOrientation = Input.deviceOrientation;
 
-            if (currentOrientation == DeviceOrientation.LandscapeLeft && Screen.orientation != ScreenOrientation.LandscapeLeft)
+            if (currentOrientation == DeviceOrientation.LandscapeLeft
+                && Screen.orientation != ScreenOrientation.LandscapeLeft)
                 Screen.orientation = ScreenOrientation.LandscapeLeft;
-            else if (currentOrientation == DeviceOrientation.LandscapeRight && Screen.orientation != ScreenOrientation.LandscapeRight)
+            else if (currentOrientation == DeviceOrientation.LandscapeRight
+                && Screen.orientation != ScreenOrientation.LandscapeRight)
                 Screen.orientation = ScreenOrientation.LandscapeRight;
-            else if (currentOrientation == DeviceOrientation.Portrait && Screen.orientation != ScreenOrientation.Portrait)
+            else if (currentOrientation == DeviceOrientation.Portrait
+                && Screen.orientation != ScreenOrientation.Portrait)
                 Screen.orientation = ScreenOrientation.Portrait;
-            else if (currentOrientation == DeviceOrientation.PortraitUpsideDown && Screen.orientation != ScreenOrientation.PortraitUpsideDown)
+            else if (currentOrientation == DeviceOrientation.PortraitUpsideDown
+                && Screen.orientation != ScreenOrientation.PortraitUpsideDown)
                 Screen.orientation = ScreenOrientation.PortraitUpsideDown;
         }
 
@@ -86,8 +97,5 @@ namespace View.UI
             Screen.autorotateToPortrait = false;
             Screen.orientation = ScreenOrientation.LandscapeLeft;
         }
-
-        private async UniTask<bool> IsInternetAvailable() =>
-            await new Misc.Services.InternetChecker().IsAvailableAsync();
     }
 }
